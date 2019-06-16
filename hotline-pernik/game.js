@@ -225,7 +225,7 @@ class Blast extends Weapon{
     shoot(){
         if (this.curr_reload <= 0){
           for(let i=0;i<30;i++){
-            projectiles.push(new Blpro(this.x, this.y, this.x + Math.cos(this.angle), this.y + Math.sin(this.angle), this.held_by,33-i));
+            projectiles.push(new Blpro(this.x, this.y, this.x + Math.cos(this.angle), this.y + Math.sin(this.angle), this.held_by,20-i*0.5));
             this.curr_reload = this.reload_time;
           }
         }
@@ -239,7 +239,7 @@ class fourway extends Weapon{
     shoot(){
         if (this.curr_reload <= 0){
           for(let i=0;i<4;i++){
-            projectiles.push(new Bullet(this.x, this.y, this.x + Math.cos(this.angle+Math.random()*0.3-0.2), this.y + Math.sin(this.angle+Math.random()*0.3-0.2), this.held_by));
+            projectiles.push(new RotBul(this.x, this.y, this.x + Math.cos(this.angle+Math.random()*0.3-0.2), this.y + Math.sin(this.angle+Math.random()*0.3-0.2), this.held_by));
             this.curr_reload = this.reload_time;
           }
         }
@@ -314,12 +314,60 @@ class Blpro extends Projectile{
         this.dmg = 2;
     }
     update(){
-        super.update();
-        this.x += this.dx;
-        this.y += this.dy;
+      super.update();
+      this.x += this.dx;
+      this.y += this.dy;
     }
 }
+class RotBul extends Projectile{
+  constructor(x, y, tx, ty, who,speed){
+      super(x, y, tx, ty, who,speed);
+      this.speed=speed;
+      this.img = blpro_img;
+      this.sx = 10;
+      this.sy = 10;
+      this.r=20;
+      this.a=0;
+      this.da=0.05;
+      this.bulx=[];
+      this.buly=[];
+      let dist = d(x, y, tx, ty);
+      this.dx = (tx-x)/dist*this.speed;
+      this.dy = (ty-y)/dist*this.speed;
+      this.ang = Math.atan2(ty-y, tx-x);
+      this.dmg = 2;
+      this.amu=3;
+      for(let i=0;i<this.amu;i++){
+        this.bulx[i]=0;
+        this.buly[i]=0;
+      }
+      this.center={x:this.x,y:this.y};
+    }
+    update(){
+      super.update();
+      this.r+=0.5;
+      this.a += this.da;
+      for(let i=0;i<this.amu;i++){
+        this.bulx[i] = this.center.x + (this.r * Math.sin(i*(this.amu-1)+this.a));
+        this.buly[i] = this.center.y + (this.r * Math.cos(i*(this.amu-1)+this.a));
+      }
 
+    }
+    draw(){
+      for(let i=0;i<this.amu;i++){
+        context.fillRect(this.bulx[i],this.buly[i],this.sx,this.sy);
+        //drawImageRot(this.img, this.bulx[i], this.buly[i], this.sx, this.sy, this.ang);
+      }
+
+    }
+  }
+
+class RotBul2 extends RotBul{
+  constructor(x, y, tx, ty, who,speed){
+      super(x, y, tx, ty, who,speed);
+      this.da=Math.random()*0.1;
+  }
+}
 class Wall{
     constructor(x, y, sx, sy, angle){
         this.x = x;
@@ -355,7 +403,6 @@ function rem_human(i){
     if(humans[i].held!=-1) weapons[humans[i].held].held_by = i;
     humans.pop();
 }
-
 function rem_projectile(i){
     projectiles[i] = projectiles[projectiles.length-1];
     projectiles.pop();
@@ -378,6 +425,7 @@ function update() {
         if (projectiles[i].x!=projectiles[i].x) rem_projectile(i--);
     }
 }
+
 function draw() {
     for (let i=0; i<walls.length; ++i){
         walls[i].draw();
@@ -391,6 +439,7 @@ function draw() {
     for (let i=0; i<projectiles.length; ++i){
         projectiles[i].draw();
     }
+
 };
 function keyup(key) {
     for (let i=0; i<humans.length; ++i){
